@@ -1,0 +1,38 @@
+.logo-navbar {
+    width: 70px;
+}
+
+.logo-home {
+    width: 250px;
+}
+.card-button-div {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    --bs-card-border-radius: 25px;
+}
+.card-button:hover .card-button-div {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
+}
+
+
+.fondo-azul {
+    background-color: #1155cc;
+}
+.letra-azul {
+    color: #3c78d8;
+}
+.card.borde-rosa {
+    --bs-card-border-color: rgba(255, 0, 255, 1);
+    --bs-card-border-width: 3px;
+    background-color: rgb(255, 118, 255);
+    color: white;
+    min-height: 100%
+}
+.card.borde-azul {
+    --bs-card-border-color: rgba(0, 0, 255, 1);
+    --bs-card-border-width: 3px;
+    background-color: rgb(100, 100, 255);
+    color: white;
+    min-height: 100%
+}
