@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolus IV múltiple</title>
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+    <div id="navbar">
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #1155cc">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="./index.html">
+                    <img class="logo-navbar" src="./logo-ucn.png" alt="logo ucn">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="./index.html">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./intravenosou.html">Bolus IV Dosis Única</a>
+                        </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link" href="./intravenosomu.html">Bolus IV Dosis Múltiple</a>
+                        </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link" href="./extravasalu.html">Extravasal Oral Dosis Única</a>
+                        </li>
+                        <!-- <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                Dropdown
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#">Action</a></li>
+                                <li><a class="dropdown-item" href="#">Another action</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="#">Something else here</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link disabled" aria-disabled="true">Disabled</a>
+                        </li> -->
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+    <div id="content">
+
+
+        <div class="container-fluid p-0">
+            <div class="text-center py-5 fondo-azul">
+                <h1 class="text-white fw-bold">Bolus intravenoso dosis múltiple monocompartimental</h1>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row mt-4">
+                <div class="col-md-2">
+                    <h2 class="letra-azul fw-bold">Datos</h2>
+                    <form id="chartForm">
+                        <label for="dose" class="form-label">D [mg]:</label>
+                        <input type="number" id="dose" name="dose" value="100" class="form-control">
+                        <label for="tau" class="form-label">τ [h]:</label>
+                        <input type="number" id="tau" name="tau" value="9" class="form-control">
+                        <label for="n" class="form-label">n (Numero de dosis):</label>
+                        <input type="number" id="n" name="n" value="12" class="form-control">
+                        <label for="vd" class="form-label">Vd [L]:</label>
+                        <input type="number" id="vd" name="vd" value="10" class="form-control" min="2" max="200">
+                        <label for="cl" class="form-label">CL [L/h]:</label>
+                        <input type="number" id="cl" name="cl" value="0.77" class="form-control" step="0.1" min="0.1"
+                            max="10">
+                        <button type="button" onclick="updateChart()" class="btn btn-primary mt-3 mb-4" id="actualizar">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar gr&aacute;fico
+                        </button>
+                    </form>
+                </div>
+
+                <div class="col-md-10">
+                    <canvas id="myChart"></canvas>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-md-4">
+                    <div class="text-center mb-1">
+                        <p>
+                            <span class="fw-bold">Datos Base:</span> D [mg]: 100 | τ [h]: 9 | n: 12 | Vd
+                            (L): 10 | CL: 0.77
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="text-center mb-1">
+                        <p>
+                            <span class="fw-bold">Resultado Base:</span> Cp max(ss): 20 | Cp min(ss): 10 | 
+                            r(ss): 2 | Cp media(ss): 14.43 | kel[1/h]: 0.077 | t1/2: 9 | Fluct%: 69.30 
+                            | F: 2
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <script>
+                var ctx = document.getElementById('myChart').getContext('2d');
+                var chart;
+
+                // Calcuar data para dosis multiples
+                function calculateCpData(dose, tau, n, vd, cl) {
+                    var kel = cl / vd;
+                    var cpmax = dose / vd / (1 - Math.exp(-kel * tau));
+                    var cpmin = cpmax * Math.exp(-kel * tau);
+                    var cpmin_permanent = 10;
+                    var r = 1 / (1 - Math.exp(-kel * tau));
+                    var cpmed = dose / cl / tau;
+                    var t_half = Math.log(2) / kel;
+                    var fluct = (cpmax - cpmin) / cpmed * 100;
+                    var f = cpmax / cpmin;
+                    var unknown = Math.log(cpmin_permanent / ((dose / vd) + cpmin_permanent)) / -kel;
+                    var timePoints = [];
+                    var concentrationPoints = [];
+
+                    for (var t = 0; t <= 140; t += 1) {
+                        var Cp = 0; // Resetear concentracion para cada time point
+
+                        // Agregar la concentracion de cada dosis
+                        for (var i = 0; i < n; i++) {
+                            var doseTime = i * tau;
+                            if (t >= doseTime) {
+                                Cp += (dose / vd) * Math.exp(-kel * (t - doseTime));
+                            }
+                        }
+
+                        timePoints.push(t);
+                        concentrationPoints.push(Cp);
+                    }
+
+                    return { timePoints, concentrationPoints, kel, cpmax, cpmin, r, cpmed, t_half, fluct, f, unknown };
+                }
+
+                var permanentDose = 100;
+                var permanentTau = 9;
+                var permanentN = 12;
+                var permanentVd = 10.0;
+                var permanentCl = 0.77;
+                var permanentData = calculateCpData(permanentDose, permanentTau, permanentN, permanentVd, permanentCl);
+
+                function updateChart() {
+                    var dose = parseFloat(document.getElementById('dose').value);
+                    var tau = parseFloat(document.getElementById('tau').value);
+                    var n = parseFloat(document.getElementById('n').value);
+                    var vd = parseFloat(document.getElementById('vd').value);
+                    var cl = parseFloat(document.getElementById('cl').value);
+
+                    var userData = calculateCpData(dose, tau, n, vd, cl);
+
+                    if (chart) {
+                        chart.data.datasets[1].data = userData.concentrationPoints;
+                        chart.update();
+                    } else {
+                        chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: permanentData.timePoints,
+                                datasets: [
+                                    {
+                                        label: 'Base (D = 100, τ = 9, n = 12, etc.)',
+                                        data: permanentData.concentrationPoints,
+                                        borderColor: 'rgba(0, 0, 255, 1)',
+                                        borderWidth: 3,
+                                        fill: false,
+                                        pointRadius: 2
+                                    },
+                                    {
+                                        label: 'Resultado',
+                                        data: userData.concentrationPoints,
+                                        borderColor: 'rgba(255, 0, 255, 1)',
+                                        borderWidth: 6,
+                                        fill: false,
+                                        pointRadius: 2
+                                    }
+                                ]
+                            },
+                            options: {
+                                scales: {
+                                    x: {
+                                        type: 'linear',
+                                        position: 'bottom',
+                                        title: {
+                                            display: true,
+                                            text: 'Tiempo (horas)',
+                                            font: {
+                                                size: 18
+                                            }
+                                        },
+                                        ticks: {
+                                            font: {
+                                                size: 16
+                                            }
+                                        }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Concentración (mg/L)',
+                                            font: {
+                                                size: 18
+                                            }
+                                        },
+                                        ticks: {
+                                            font: {
+                                                size: 16
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    // actualizar resultados
+                    document.getElementById('cpmax').innerHTML = userData.cpmax.toFixed(2);
+                    document.getElementById('cpmin').innerHTML = userData.cpmin.toFixed(2);
+                    document.getElementById('r').innerHTML = userData.r.toFixed(2);
+                    document.getElementById('cpmed').innerHTML = userData.cpmed.toFixed(2);
+                    document.getElementById('kel').innerHTML = userData.kel.toFixed(3);
+                    document.getElementById('t_half').innerHTML = userData.t_half.toFixed(2);
+                    document.getElementById('fluct').innerHTML = userData.fluct.toFixed(2);
+                    document.getElementById('f').innerHTML = userData.f.toFixed(2);
+                    document.getElementById('unknown').innerHTML = userData.unknown.toFixed(4);
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    updateChart();
+                });
+
+                // Actualizar grafico al presionar Enter
+                document.getElementById('chartForm').addEventListener('keypress', function (event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        document.getElementById('actualizar').click();
+                    }
+                });
+            </script>
+        </div>
+
+        <div class="container-fluid py-2 fondo-azul">
+            <div class="container">
+                <div class="row mt-4 mb-2">
+
+                    <div class="col-md-4 order-md-2">
+                        <div class="card borde-rosa">
+                            <div class="card-header">
+                                <div class="text-center">
+                                    <h2 class="fw-bold">Resultados</h2>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <h5>
+                                    <span class="fw-bold">Cp max(ss):</span> <span id="cpmax"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">Cp min(ss):</span> <span id="cpmin"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">r(ss):</span> <span id="r"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">Cp media(ss):</span> <span id="cpmed"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">kel[1/h]:</span> <span id="kel"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">t1/2(h):</span> <span id="t_half"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">Fluct.(%):</span> <span id="fluct"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">F:</span> <span id="f"></span>
+                                </h5>
+                                <h5>
+                                    <span class="fw-bold">????:</span> <span id="unknown"></span>
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8 order-md-1">
+                        <div class="card borde-azul">
+                            <div class="card-header">
+                                <div class="text-center">
+                                    <h2 class="fw-bold">Instrucciones</h2>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="m-0 fw-bold">Analizar como en el caso anterior las curvas y los parámetros en
+                                    los siguientes casos:</p>
+                                <ol type="1" class="m-0">
+                                    <li>Sin cambios en Vd:</li>
+                                    <ul>
+                                        <li>Cambios en aclaramiento:</li>
+                                        <ol type="I">
+                                            <li>Cl = 0,1</li>
+                                            <li>Cl = 10</li>
+                                        </ol>
+                                    </ul>
+                                    <li>Sin cambios en aclaramiento:</li>
+                                    <ul>
+                                        <li>Cambios en Vd:</li>
+                                        <ol type="I">
+                                            <li>Vd = 2</li>
+                                            <li>Vd = 200</li>
+                                        </ol>
+                                    </ul>
+                                    <li>
+                                        Calcule la pauta de dosificación que se debería utilizar en cada una de las 
+                                        modificaciones anteriores con el fin de obtener:
+                                    </li>
+                                    <ol type="a">
+                                        <li>La misma concentración plasmática media en estado estacionario (en ambas series).</li>
+                                        <li>La misma Cmin.</li>
+                                    </ol>
+                                </ol>
+                                <p class="m-0 fw-bold">Explique y razone los resultados obtenidos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="footer">
+            <footer class="container">
+                <div class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+                    <div class="col-md-4 d-flex align-items-center">
+                        <a href="/" class="mb-3 me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
+                            <svg class="bi" width="30" height="24">
+                                <use xlink:href="#bootstrap"></use>
+                            </svg>
+                        </a>
+                        <span class="mb-3 mb-md-0 text-body-secondary">Desarrollado por Pablo Cortés Rojas</span>
+                    </div>
+
+                    <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">
+                        <li class="ms-3">
+                            <a class="text-body-secondary h5" href="https://github.com/pcortesduoc">
+                                <i class="bi bi-github"></i>
+                            </a>
+                        </li>
+                        <li class="ms-3">
+                            <a class="text-body-secondary h5" href="https://www.linkedin.com/in/pablo-cortes-rojas/">
+                                <i class="bi bi-linkedin"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
